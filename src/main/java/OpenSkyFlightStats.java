@@ -4,8 +4,8 @@ import com.hazelcast.jet.datamodel.KeyedWindowResult;
 import com.hazelcast.jet.datamodel.Tuple2;
 import com.hazelcast.jet.pipeline.*;
 import datasources.OpenSkyDataSource;
-import models.dto.FlightResult;
-import models.dto.Location;
+import models.FlightResult;
+import models.Location;
 import models.StateVector;
 import okhttp3.*;
 

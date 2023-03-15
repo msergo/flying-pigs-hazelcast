@@ -1,4 +1,4 @@
-package models.dto;
+package models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.core.JsonProcessingException;

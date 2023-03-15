@@ -1,7 +1,6 @@
-package models.dto;
+package models;
 
 import lombok.Data;
-import models.dto.Location;
 
 import java.util.List;
 
