@@ -19,7 +19,7 @@ public class OpenSkyFlightStats {
     private double laMax;
     private long pollingInterval;
 
-    public OpenSkyFlightStats(long loMin, long loMax, long laMin, long laMax, long pollingInterval) {
+    public OpenSkyFlightStats(long loMin, long loMax, long laMin, long laMax, long pollingInterval, String locationId) {
         this.loMin = loMin;
         this.loMax = loMax;
         this.laMin = laMin;
@@ -35,13 +35,13 @@ public class OpenSkyFlightStats {
         this.pollingInterval = location.getPollingInterval();
     }
 
-    public Pipeline createPipeline() {
+    public Pipeline createPipeline(String locationId) {
         Pipeline pipeline = Pipeline.create();
+
         Sink httpSink = SinkBuilder.<OkHttpClient>sinkBuilder(
                         "http-sink", ctx -> new OkHttpClient())
                 .receiveFn((client, item) -> {
-                    FlightResult flightResult = new FlightResult((KeyedWindowResult<String, Tuple2<List<StateVector>, List<StateVector>>>) item);
-
+                    FlightResult flightResult = new FlightResult((KeyedWindowResult<String, Tuple2<List<StateVector>, List<StateVector>>>) item, locationId);
                     Request request = new Request.Builder()
                             .url(System.getenv("SINK_URL"))
                             .post(RequestBody.create(MediaType.parse("application/json"), flightResult.toJsonString()))
@@ -52,7 +52,7 @@ public class OpenSkyFlightStats {
                 })
                 .build();
 
-        HttpUrl url = new HttpUrl.Builder()
+        String url = new HttpUrl.Builder()
                 .scheme("https")
                 .host("opensky-network.org")
                 .addPathSegment("api/states/all")
@@ -60,10 +60,11 @@ public class OpenSkyFlightStats {
                 .addQueryParameter("lomin", String.valueOf(loMin))
                 .addQueryParameter("lamax", String.valueOf(laMax))
                 .addQueryParameter("lomax", String.valueOf(loMax))
-                .build();
+                .build()
+                .toString();
 
         // Read from http
-        pipeline.readFrom(OpenSkyDataSource.getDataSource(url.toString(), pollingInterval))
+        pipeline.readFrom(OpenSkyDataSource.getDataSource(url, pollingInterval))
                 .withIngestionTimestamps()
                 .groupingKey(message -> message.getCallsign().trim())
                 .window(WindowDefinition.session(TimeUnit.MINUTES.toMillis(10)))

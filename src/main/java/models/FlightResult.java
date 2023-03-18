@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.hazelcast.jet.datamodel.KeyedWindowResult;
 import com.hazelcast.jet.datamodel.Tuple2;
 import lombok.Data;
-import models.StateVector;
 
 import java.sql.Date;
 import java.text.SimpleDateFormat;
@@ -17,6 +16,7 @@ import java.util.TimeZone;
 @Data
 public class FlightResult {
     private String key;
+    private String locationId;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private Date start;
@@ -28,11 +28,11 @@ public class FlightResult {
     private double endLat;
     private double endLon;
 
-    public FlightResult(KeyedWindowResult<String, Tuple2<List<StateVector>, List<StateVector>>> keyedWindowResult) {
-        this.key = keyedWindowResult.key();
+    public FlightResult(KeyedWindowResult<String, Tuple2<List<StateVector>, List<StateVector>>> keyedWindowResult, String locationId) {
         StateVector startStateVector = keyedWindowResult.getValue().f0().get(0);
         StateVector endStateVector = keyedWindowResult.getValue().f1().get(0);
 
+        this.key = keyedWindowResult.key();
         this.start = new Date(keyedWindowResult.start());
         this.end = new Date(keyedWindowResult.end());
         this.hasLanded = startStateVector.isOnGround();
@@ -40,6 +40,7 @@ public class FlightResult {
         this.startLon = startStateVector.getLongitude();
         this.endLat = endStateVector.getLatitude();
         this.endLon = endStateVector.getLongitude();
+        this.locationId = locationId;
     }
 
     public String toJsonString() throws JsonProcessingException {

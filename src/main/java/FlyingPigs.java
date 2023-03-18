@@ -31,7 +31,7 @@ public class FlyingPigs {
         locations.stream().forEach(location -> {
             JobConfig jobConfig = new JobConfig().setName(location.getName());
             OpenSkyFlightStats flightStats = new OpenSkyFlightStats(location);
-            Pipeline pipeline = flightStats.createPipeline();
+            Pipeline pipeline = flightStats.createPipeline(location.getId());
             jet.newJob(pipeline, jobConfig);
         });
     }
