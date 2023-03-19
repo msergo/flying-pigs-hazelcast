@@ -1,0 +1,29 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flying-pigs-hazelcast-job
+  labels:
+    app: flying-pigs-hazelcast-job
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flying-pigs-hazelcast-job
+  template:
+    metadata:
+      labels:
+        app: flying-pigs-hazelcast-job
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: flying-pigs-hazelcast-job
+          image: harbor.codemowers.eu/msergo/flying-pigs-hazelcast
+          env:
+            - name: LOCATIONS_URL
+              value: http://flying-pigs-node/locations
+            - name: SINK_URL
+              value: http://flying-pigs-node/flights
+            - name: JET_ADDRESS
+              value: hazelcast-jet-service

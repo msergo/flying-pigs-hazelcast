@@ -27,6 +27,8 @@ public class FlyingPigs {
         List<Location> locations = locationData.getData();
 
         JetInstance jet = Jet.bootstrappedInstance();
+        jet.getConfig().configureHazelcast(c -> c.getNetworkConfig().setPublicAddress(System.getenv("JET_ADDRESS")));
+        jet.getConfig().getHazelcastConfig().setClusterName("jet");
 
         locations.stream().forEach(location -> {
             JobConfig jobConfig = new JobConfig().setName(location.getName());
