@@ -25,5 +25,3 @@ spec:
               value: http://flying-pigs-node/locations
             - name: SINK_URL
               value: http://flying-pigs-node/flights
-            - name: JET_ADDRESS
-              value: hazelcast-jet-service
