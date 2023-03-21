@@ -49,8 +49,13 @@ public class OpenSkyFlightStats {
                             .post(RequestBody.create(MediaType.parse("application/json"), flightResult.toJsonString()))
                             .build();
 
-                    Call call = client.newCall(request);
-                    call.execute();
+                    try {
+                        Call call = client.newCall(request);
+                        Response response = call.execute();
+                        response.body().close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 })
                 .build();
 
