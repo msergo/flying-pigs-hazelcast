@@ -3,7 +3,6 @@ WORKDIR /app
 COPY src /app/src
 COPY pom.xml /app
 RUN mvn -f /app/pom.xml clean package
-RUN ls /app/target/
 
 
 FROM hazelcast/hazelcast-jet

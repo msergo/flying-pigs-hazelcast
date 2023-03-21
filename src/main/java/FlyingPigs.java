@@ -8,15 +8,19 @@ import models.LocationData;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import pipelines.OpenSkyFlightStats;
 
 import java.io.IOException;
 import java.util.List;
 
 public class FlyingPigs {
     public static void main(String[] args) throws IOException {
+        String locationsUrl = System.getenv("LOCATIONS_URL");
+        String sinkUrl = System.getenv("SINK_URL");
+
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
-                .url(System.getenv("LOCATIONS_URL"))
+                .url(locationsUrl)
                 .build();
 
         Call call = client.newCall(request);
@@ -31,7 +35,8 @@ public class FlyingPigs {
         locations.stream().forEach(location -> {
             JobConfig jobConfig = new JobConfig().setName(location.getName());
             OpenSkyFlightStats flightStats = new OpenSkyFlightStats(location);
-            Pipeline pipeline = flightStats.createPipeline(location.getId());
+            Pipeline pipeline = flightStats.createPipeline(location.getId(), sinkUrl);
+
             jet.newJob(pipeline, jobConfig);
         });
     }

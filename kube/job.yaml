@@ -1,0 +1,21 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flying-pigs-hazelcast-submit-job
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: flying-pigs-hazelcast-job
+          image: harbor.codemowers.eu/msergo/flying-pigs-hazelcast
+          env:
+          - name: LOCATIONS_URL
+            value: http://flying-pigs-node/locations
+          - name: SINK_URL
+            value: http://flying-pigs-node/flights
+          command: ["sh", "-c", "jet -t hazelcast-jet-service submit /jobs/flying-pigs-hazelcast-1.0-SNAPSHOT-jar-with-dependencies.jar"]
+      restartPolicy: Never
+  backoffLimit: 3

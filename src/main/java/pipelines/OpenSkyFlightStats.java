@@ -1,3 +1,5 @@
+package pipelines;
+
 import com.hazelcast.function.ComparatorEx;
 import com.hazelcast.jet.aggregate.AggregateOperations;
 import com.hazelcast.jet.datamodel.KeyedWindowResult;
@@ -35,7 +37,7 @@ public class OpenSkyFlightStats {
         this.pollingInterval = location.getPollingInterval();
     }
 
-    public Pipeline createPipeline(String locationId) {
+    public Pipeline createPipeline(String locationId, String sinkUrl) {
         Pipeline pipeline = Pipeline.create();
 
         Sink httpSink = SinkBuilder.<OkHttpClient>sinkBuilder(
@@ -43,7 +45,7 @@ public class OpenSkyFlightStats {
                 .receiveFn((client, item) -> {
                     FlightResult flightResult = new FlightResult((KeyedWindowResult<String, Tuple2<List<StateVector>, List<StateVector>>>) item, locationId);
                     Request request = new Request.Builder()
-                            .url(System.getenv("SINK_URL"))
+                            .url(sinkUrl)
                             .post(RequestBody.create(MediaType.parse("application/json"), flightResult.toJsonString()))
                             .build();
 
@@ -67,7 +69,7 @@ public class OpenSkyFlightStats {
         pipeline.readFrom(OpenSkyDataSource.getDataSource(url, pollingInterval))
                 .withIngestionTimestamps()
                 .groupingKey(message -> message.getCallsign().trim())
-                .window(WindowDefinition.session(TimeUnit.MINUTES.toMillis(10)))
+                .window(WindowDefinition.session(TimeUnit.MINUTES.toMillis(5)))
                 .aggregate(AggregateOperations.allOf(
                         AggregateOperations.bottomN(1, ComparatorEx.comparing(StateVector::getLastContact)),
                         AggregateOperations.topN(1, ComparatorEx.comparing(StateVector::getLastContact)))
