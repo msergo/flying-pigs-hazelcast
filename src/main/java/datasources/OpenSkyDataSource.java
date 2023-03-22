@@ -7,11 +7,9 @@ import com.hazelcast.jet.pipeline.StreamSource;
 import com.hazelcast.logging.ILogger;
 import models.OpenSkyStates;
 import models.StateVector;
+import okhttp3.*;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -23,6 +21,8 @@ public class OpenSkyDataSource {
 
     private long lastPoll;
 
+    private OkHttpClient client;
+
     private OpenSkyDataSource(ILogger logger, String url, long pollIntervalMillis) {
         this.logger = logger;
         try {
@@ -30,7 +30,9 @@ public class OpenSkyDataSource {
         } catch (MalformedURLException e) {
             throw ExceptionUtil.rethrow(e);
         }
+
         this.pollIntervalMillis = pollIntervalMillis;
+        this.client = new OkHttpClient();
     }
 
 
@@ -48,31 +50,28 @@ public class OpenSkyDataSource {
     }
 
     private OpenSkyStates pollForOpenSkyStates() throws IOException {
-        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
-        StringBuilder response = new StringBuilder();
         try {
-            con.setRequestMethod("GET");
-            con.addRequestProperty("User-Agent", "Mozilla / 5.0 (Windows NT 6.1; WOW64) AppleWebKit / 537.36 (KHTML, like Gecko) Chrome / 40.0.2214.91 Safari / 537.36");
-            int responseCode = con.getResponseCode();
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()))) {
-                String inputLine;
-                while ((inputLine = in.readLine()) != null) {
-                    response.append(inputLine);
-                }
-            }
+            Request request = new Request.Builder()
+                    .url(url)
+                    .get()
+                    .build();
+
+            Call call = client.newCall(request);
+            Response response = call.execute();
+            int responseCode = response.code();
+            String responseBody = response.body().string();
+
             if (responseCode != 200) {
-                logger.info("API returned error: " + responseCode + " " + response);
+                logger.info("API returned error: " + response.code() + " " + response);
                 return new OpenSkyStates();
             }
-        } finally {
-            con.disconnect();
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(responseBody, OpenSkyStates.class);
+        } catch (IOException e) {
+            logger.info("Error while polling OpenSky API: " + e.getMessage());
+            return new OpenSkyStates();
         }
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        // Deserialize the JSON data into an OpenSkyStatesResponse instance
-        OpenSkyStates openSkyStates = objectMapper.readValue(response.toString(), OpenSkyStates.class);
-
-        return openSkyStates;
     }
 
     public static StreamSource<StateVector> getDataSource(String url, long pollIntervalMillis) {
