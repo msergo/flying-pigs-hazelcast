@@ -1,5 +1,6 @@
 package pipelines;
 
+import clients.FlyingPigsApiClient;
 import com.hazelcast.function.ComparatorEx;
 import com.hazelcast.jet.aggregate.AggregateOperations;
 import com.hazelcast.jet.datamodel.KeyedWindowResult;
@@ -37,25 +38,15 @@ public class OpenSkyFlightStats {
         this.pollingInterval = location.getPollingInterval();
     }
 
-    public Pipeline createPipeline(String locationId, String sinkUrl) {
+    public Pipeline createPipeline(String locationId, String apiHost, String userEmail, String userPassword) {
         Pipeline pipeline = Pipeline.create();
+        String sinkUrl = apiHost + "/flights";
 
-        Sink httpSink = SinkBuilder.<OkHttpClient>sinkBuilder(
-                        "http-sink", ctx -> new OkHttpClient())
+        Sink httpSink = SinkBuilder.<FlyingPigsApiClient>sinkBuilder(
+                        "http-sink", ctx -> new FlyingPigsApiClient(apiHost, userEmail, userPassword))
                 .receiveFn((client, item) -> {
                     FlightResult flightResult = new FlightResult((KeyedWindowResult<String, Tuple2<List<StateVector>, List<StateVector>>>) item, locationId);
-                    Request request = new Request.Builder()
-                            .url(sinkUrl)
-                            .post(RequestBody.create(MediaType.parse("application/json"), flightResult.toJsonString()))
-                            .build();
-
-                    try {
-                        Call call = client.newCall(request);
-                        Response response = call.execute();
-                        response.body().close();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    client.post(sinkUrl, flightResult.toJsonString());
                 })
                 .build();
 

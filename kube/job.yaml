@@ -10,12 +10,24 @@ spec:
         - name: regcred
       containers:
         - name: flying-pigs-hazelcast-job
-          image: harbor.codemowers.eu/msergo/flying-pigs-hazelcast
+          image: harbor.codemowers.eu/msergo/flying-pigs-hazelcast@sha256:c6242d75833fdf7a72816d2ee42fb84952c6efb7f50e7a5fc0bcd7e9ac41d670
           env:
-          - name: LOCATIONS_URL
-            value: http://flying-pigs-node/locations
-          - name: SINK_URL
-            value: http://flying-pigs-node/flights
+            - name: USER_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: flying-pigs-hazelcast-secrets
+                  key: USER_EMAIL
+            - name: USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: flying-pigs-hazelcast-secrets
+                  key: USER_PASSWORD
+            - name: API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: flying-pigs-hazelcast-secrets
+                  key: API_URL
+
           command: ["sh", "-c", "jet -t hazelcast-jet-service submit /jobs/flying-pigs-hazelcast-1.0-SNAPSHOT-jar-with-dependencies.jar"]
       restartPolicy: Never
   backoffLimit: 3
