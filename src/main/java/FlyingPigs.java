@@ -34,7 +34,11 @@ public class FlyingPigs {
             OpenSkyFlightStats flightStats = new OpenSkyFlightStats(location);
             Pipeline pipeline = flightStats.createPipeline(location.getId(), apiHost, userEmail, userPassword);
 
-            jet.newJob(pipeline, jobConfig);
+            try {
+                jet.getJob(location.getName()).cancel();
+            } finally {
+                jet.newJob(pipeline, jobConfig);
+            }
         });
     }
 }
