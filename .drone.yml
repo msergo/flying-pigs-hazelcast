@@ -6,7 +6,7 @@ steps:
     image: harbor.k-space.ee/k-space/drone-kaniko
     settings:
       repo: ${DRONE_REPO}
-      tags: ${DRONE_COMMIT}
+      tags: ${DRONE_TAG}
       registry: harbor.codemowers.eu
       username:
         from_secret: docker_username
