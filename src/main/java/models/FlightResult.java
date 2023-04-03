@@ -4,13 +4,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.hazelcast.jet.datamodel.KeyedWindowResult;
-import com.hazelcast.jet.datamodel.Tuple2;
 import lombok.Data;
 
 import java.sql.Date;
 import java.text.SimpleDateFormat;
-import java.util.List;
 import java.util.TimeZone;
 
 @Data
@@ -28,19 +25,17 @@ public class FlightResult {
     private double endLat;
     private double endLon;
 
-    public FlightResult(KeyedWindowResult<String, Tuple2<List<StateVector>, List<StateVector>>> keyedWindowResult, String locationId) {
-        StateVector startStateVector = keyedWindowResult.getValue().f0().get(0);
-        StateVector endStateVector = keyedWindowResult.getValue().f1().get(0);
+    public FlightResult(String locationId, String key, StateVector startStateVector, StateVector endStateVector) {
+        this.key = key;
+        this.locationId = locationId;
 
-        this.key = keyedWindowResult.key();
-        this.start = new Date(keyedWindowResult.start());
-        this.end = new Date(keyedWindowResult.end());
+        this.start = new Date((long) (startStateVector.getLastContact() * 1000));
+        this.end = new Date((long) (endStateVector.getLastContact() * 1000));
         this.hasLanded = startStateVector.isOnGround();
         this.startLat = startStateVector.getLatitude();
         this.startLon = startStateVector.getLongitude();
         this.endLat = endStateVector.getLatitude();
         this.endLon = endStateVector.getLongitude();
-        this.locationId = locationId;
     }
 
     public String toJsonString() throws JsonProcessingException {

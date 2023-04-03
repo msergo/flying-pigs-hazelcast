@@ -45,7 +45,12 @@ public class OpenSkyFlightStats {
         Sink httpSink = SinkBuilder.<FlyingPigsApiClient>sinkBuilder(
                         "http-sink", ctx -> new FlyingPigsApiClient(apiHost, userEmail, userPassword))
                 .receiveFn((client, item) -> {
-                    FlightResult flightResult = new FlightResult((KeyedWindowResult<String, Tuple2<List<StateVector>, List<StateVector>>>) item, locationId);
+                    KeyedWindowResult<String, Tuple2<List<StateVector>, List<StateVector>>> keyedWindowResult = (KeyedWindowResult<String, Tuple2<List<StateVector>, List<StateVector>>>) item;
+                    StateVector startStateVector = keyedWindowResult.result().f0().get(0);
+                    StateVector endStateVector = keyedWindowResult.result().f1().get(0);
+                    String key = keyedWindowResult.key();
+
+                    FlightResult flightResult = new FlightResult(locationId, key, startStateVector, endStateVector);
                     client.post(sinkUrl, flightResult.toJsonString());
                 })
                 .build();
@@ -64,7 +69,7 @@ public class OpenSkyFlightStats {
         // Read from http
         pipeline.readFrom(OpenSkyDataSource.getDataSource(url, pollingInterval))
                 .withIngestionTimestamps()
-                .groupingKey(message -> message.getCallsign().trim())
+                .groupingKey(message -> message.getIcao24().trim())
                 .window(WindowDefinition.session(TimeUnit.MINUTES.toMillis(5)))
                 .aggregate(AggregateOperations.allOf(
                         AggregateOperations.bottomN(1, ComparatorEx.comparing(StateVector::getLastContact)),
