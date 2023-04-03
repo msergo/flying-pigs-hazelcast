@@ -24,6 +24,8 @@ public class FlightResult {
     private double startLon;
     private double endLat;
     private double endLon;
+    private String estDepartureAirport;
+    private String estArrivalAirport;
 
     public FlightResult(String locationId, String key, StateVector startStateVector, StateVector endStateVector) {
         this.key = key;
