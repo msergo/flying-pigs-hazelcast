@@ -10,7 +10,7 @@ spec:
         - name: regcred
       containers:
         - name: flying-pigs-hazelcast-job
-          image: harbor.codemowers.eu/msergo/flying-pigs-hazelcast:v1.0.0
+          image: harbor.codemowers.eu/msergo/flying-pigs-hazelcast:master
           env:
             - name: USER_EMAIL
               valueFrom:
