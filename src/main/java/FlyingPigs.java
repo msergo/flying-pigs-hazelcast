@@ -6,7 +6,7 @@ import com.hazelcast.jet.config.JobConfig;
 import com.hazelcast.jet.pipeline.Pipeline;
 import models.Location;
 import models.LocationData;
-import pipelines.OpenSkyFlightStats;
+import pipelines.OpenSkyStatesPipeline;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public class FlyingPigs {
 
         locations.stream().forEach(location -> {
             JobConfig jobConfig = new JobConfig().setName(location.getName());
-            OpenSkyFlightStats flightStats = new OpenSkyFlightStats(location);
+            OpenSkyStatesPipeline flightStats = new OpenSkyStatesPipeline(location);
             Pipeline pipeline = flightStats.createPipeline(location.getId(), apiHost, userEmail, userPassword);
 
             try {

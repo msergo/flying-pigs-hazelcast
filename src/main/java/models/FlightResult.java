@@ -12,8 +12,9 @@ import java.util.TimeZone;
 
 @Data
 public class FlightResult {
-    private String key;
+    private String icao24;
     private String locationId;
+    private String callsign;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private Date start;
@@ -27,9 +28,10 @@ public class FlightResult {
     private String estDepartureAirport;
     private String estArrivalAirport;
 
-    public FlightResult(String locationId, String key, StateVector startStateVector, StateVector endStateVector) {
-        this.key = key;
+    public FlightResult(String locationId, StateVector startStateVector, StateVector endStateVector) {
+        this.icao24 = startStateVector.getIcao24();
         this.locationId = locationId;
+        this.callsign = startStateVector.getCallsign();
 
         this.start = new Date((long) (startStateVector.getLastContact() * 1000));
         this.end = new Date((long) (endStateVector.getLastContact() * 1000));
