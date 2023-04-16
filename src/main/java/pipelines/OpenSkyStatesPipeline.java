@@ -4,7 +4,6 @@ import clients.FlyingPigsApiClient;
 import com.hazelcast.function.ComparatorEx;
 import com.hazelcast.jet.aggregate.AggregateOperations;
 import com.hazelcast.jet.datamodel.KeyedWindowResult;
-import com.hazelcast.jet.datamodel.Tuple2;
 import com.hazelcast.jet.pipeline.Pipeline;
 import com.hazelcast.jet.pipeline.Sink;
 import com.hazelcast.jet.pipeline.SinkBuilder;
@@ -68,13 +67,20 @@ public class OpenSkyStatesPipeline {
                 .withIngestionTimestamps()
                 .groupingKey(message -> message.getIcao24().trim())
                 .window(WindowDefinition.session(TimeUnit.MINUTES.toMillis(5)))
-                .aggregate(AggregateOperations.allOf(
-                        AggregateOperations.bottomN(1, ComparatorEx.comparing(StateVector::getLastContact)),
-                        AggregateOperations.topN(1, ComparatorEx.comparing(StateVector::getLastContact)))
-                )
-                .map((KeyedWindowResult<String, Tuple2<List<StateVector>, List<StateVector>>> keyedWindowResult) -> {
-                    StateVector startStateVector = keyedWindowResult.result().f0().get(0);
-                    StateVector endStateVector = keyedWindowResult.result().f1().get(0);
+                .aggregate(AggregateOperations.toList())
+                .filter((KeyedWindowResult<String, List<StateVector>> list) -> {
+                    if (list.result().size() < 2) {
+                        return false;
+                    }
+                    // Filter out flights that were on the ground only
+                    boolean allIsOnGround = list.result().stream().allMatch(StateVector::isOnGround);
+
+                    return !allIsOnGround;
+                })
+                .map((KeyedWindowResult<String, List<StateVector>> list) -> {
+                    ComparatorEx<StateVector> comparator = ComparatorEx.comparing(StateVector::getLastContact);
+                    StateVector startStateVector = list.result().stream().min(comparator).get();
+                    StateVector endStateVector = list.result().stream().max(comparator).get();
 
                     return new FlightResult(locationId, startStateVector, endStateVector);
                 })
