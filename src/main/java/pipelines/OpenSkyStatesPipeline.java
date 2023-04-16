@@ -69,6 +69,9 @@ public class OpenSkyStatesPipeline {
                 .window(WindowDefinition.session(TimeUnit.MINUTES.toMillis(5)))
                 .aggregate(AggregateOperations.toList())
                 .filter((KeyedWindowResult<String, List<StateVector>> list) -> {
+                    if (list.result().size() < 2) {
+                        return false;
+                    }
                     // Filter out flights that were on the ground only
                     boolean allIsOnGround = list.result().stream().allMatch(StateVector::isOnGround);
 
