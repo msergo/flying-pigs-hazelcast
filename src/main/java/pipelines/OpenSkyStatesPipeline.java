@@ -11,7 +11,6 @@ import com.hazelcast.jet.pipeline.SinkBuilder;
 import com.hazelcast.jet.pipeline.WindowDefinition;
 import datasources.OpenSkyDataSource;
 import models.FlightResult;
-import models.FlightsWithingTimeRange;
 import models.Location;
 import models.StateVector;
 import okhttp3.HttpUrl;
@@ -80,12 +79,12 @@ public class OpenSkyStatesPipeline {
                     return new FlightResult(locationId, startStateVector, endStateVector);
                 })
                 // TODO: add a separate job to update last 2hr flights
-                .mapUsingIMap("all-flights", FlightResult::getIcao24, (FlightResult flightResult, FlightsWithingTimeRange flightsWithingTimeRange) -> {
-                    flightResult.setEstArrivalAirport(flightsWithingTimeRange.getEstArrivalAirport());
-                    flightResult.setEstDepartureAirport(flightsWithingTimeRange.getEstDepartureAirport());
-
-                    return flightResult;
-                })
+//                .mapUsingIMap("all-flights", FlightResult::getIcao24, (FlightResult flightResult, FlightsWithingTimeRange flightsWithingTimeRange) -> {
+//                    flightResult.setEstArrivalAirport(flightsWithingTimeRange.getEstArrivalAirport());
+//                    flightResult.setEstDepartureAirport(flightsWithingTimeRange.getEstDepartureAirport());
+//
+//                    return flightResult;
+//                })
                 .writeTo(httpSink);
 
         return pipeline;
