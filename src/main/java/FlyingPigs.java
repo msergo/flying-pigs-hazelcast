@@ -3,6 +3,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hazelcast.jet.Jet;
 import com.hazelcast.jet.JetInstance;
 import com.hazelcast.jet.config.JobConfig;
+import com.hazelcast.jet.config.ProcessingGuarantee;
 import com.hazelcast.jet.pipeline.Pipeline;
 import models.Location;
 import models.LocationData;
@@ -31,6 +32,8 @@ public class FlyingPigs {
 
         locations.stream().forEach(location -> {
             JobConfig jobConfig = new JobConfig().setName(location.getName());
+            jobConfig.setSnapshotIntervalMillis(60000);
+            jobConfig.setProcessingGuarantee(ProcessingGuarantee.AT_LEAST_ONCE);
             OpenSkyStatesPipeline flightStats = new OpenSkyStatesPipeline(location);
             Pipeline pipeline = flightStats.createPipeline(location.getId(), apiHost, userEmail, userPassword);
 
