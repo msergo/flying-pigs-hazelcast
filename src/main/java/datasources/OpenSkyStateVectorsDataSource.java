@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class OpenSkyStateVectors {
+public class OpenSkyStateVectorsDataSource {
     private final URL url;
     private final long pollIntervalMillis;
 
@@ -26,7 +26,7 @@ public class OpenSkyStateVectors {
 
     private OkHttpClient client;
 
-    private OpenSkyStateVectors(ILogger logger, String url, long pollIntervalMillis) {
+    private OpenSkyStateVectorsDataSource(ILogger logger, String url, long pollIntervalMillis) {
         this.logger = logger;
         try {
             this.url = new URL(url);
@@ -79,8 +79,8 @@ public class OpenSkyStateVectors {
 
     public static StreamSource<StateVector> getDataSource(String url, long pollIntervalMillis) {
         return SourceBuilder.timestampedStream("OpenSky StateVectors Source",
-                        ctx -> new OpenSkyStateVectors(ctx.logger(), url, pollIntervalMillis))
-                .fillBufferFn(OpenSkyStateVectors::fillBuffer)
+                        ctx -> new OpenSkyStateVectorsDataSource(ctx.logger(), url, pollIntervalMillis))
+                .fillBufferFn(OpenSkyStateVectorsDataSource::fillBuffer)
                 .build();
     }
 }

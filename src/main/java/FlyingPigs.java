@@ -5,12 +5,15 @@ import com.hazelcast.jet.JetInstance;
 import com.hazelcast.jet.config.JobConfig;
 import com.hazelcast.jet.config.ProcessingGuarantee;
 import com.hazelcast.jet.pipeline.Pipeline;
+import com.hazelcast.jet.pipeline.Sinks;
+import datasources.OpenSkyFlightDataSource;
+import models.FlightData;
 import models.Location;
 import models.LocationData;
-import pipelines.OpenSkyFlightDataPipeline;
 import pipelines.OpenSkyStatesPipeline;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class FlyingPigs {
     public static void main(String[] args) throws Exception {
@@ -30,16 +33,13 @@ public class FlyingPigs {
         List<Location> locations = locationData.getData();
 
         JetInstance jet = Jet.bootstrappedInstance();
+        Pipeline preloadFlightsPipeline = Pipeline.create();
+        // Try to preload flights from the last 2 hours, but seems more like useless because it is not a real time data
+        preloadFlightsPipeline.readFrom(OpenSkyFlightDataSource.getDataSource(TimeUnit.MINUTES.toMillis(5)))
+                .withoutTimestamps()
+                .writeTo(Sinks.map("all-flights-cached-map", FlightData::getIcao24, flightData -> flightData));
 
-        OpenSkyFlightDataPipeline flightDataPipeline = new OpenSkyFlightDataPipeline();
-        JobConfig flightDataJobConfig = new JobConfig().setName("flights-data-preloader");
-        // Pipeline for preloading flight data from OpenSky /api/flights/all endpoint
-        Pipeline flightDataPipelinePipeline = flightDataPipeline.createPipeline();
-        try {
-            jet.getJob(flightDataJobConfig.getName()).cancel();
-        } finally {
-            jet.newJob(flightDataPipelinePipeline, flightDataJobConfig);
-        }
+        jet.newJob(preloadFlightsPipeline);
 
         locations.stream().forEach(location -> {
             JobConfig jobConfig = new JobConfig().setName(location.getName());
