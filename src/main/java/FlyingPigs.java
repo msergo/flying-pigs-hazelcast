@@ -7,6 +7,7 @@ import com.hazelcast.jet.config.ProcessingGuarantee;
 import com.hazelcast.jet.pipeline.Pipeline;
 import models.Location;
 import models.LocationData;
+import pipelines.OpenSkyFlightDataPipeline;
 import pipelines.OpenSkyStatesPipeline;
 
 import java.util.List;
@@ -29,6 +30,16 @@ public class FlyingPigs {
         List<Location> locations = locationData.getData();
 
         JetInstance jet = Jet.bootstrappedInstance();
+
+        OpenSkyFlightDataPipeline flightDataPipeline = new OpenSkyFlightDataPipeline();
+        JobConfig flightDataJobConfig = new JobConfig().setName("flights-data-preloader");
+        // Pipeline for preloading flight data from OpenSky /api/flights/all endpoint
+        Pipeline flightDataPipelinePipeline = flightDataPipeline.createPipeline();
+        try {
+            jet.getJob(flightDataJobConfig.getName()).cancel();
+        } finally {
+            jet.newJob(flightDataPipelinePipeline, flightDataJobConfig);
+        }
 
         locations.stream().forEach(location -> {
             JobConfig jobConfig = new JobConfig().setName(location.getName());

@@ -8,9 +8,9 @@ import com.hazelcast.jet.pipeline.Pipeline;
 import com.hazelcast.jet.pipeline.Sink;
 import com.hazelcast.jet.pipeline.SinkBuilder;
 import com.hazelcast.jet.pipeline.WindowDefinition;
-import datasources.OpenSkyDataSource;
+import datasources.OpenSkyStateVectors;
 import models.FlightResult;
-import models.FlightsWithingTimeRange;
+import models.FlightData;
 import models.Location;
 import models.StateVector;
 import okhttp3.HttpUrl;
@@ -64,7 +64,7 @@ public class OpenSkyStatesPipeline {
                 .toString();
 
         // Read from http
-        pipeline.readFrom(OpenSkyDataSource.getDataSource(url, pollingInterval))
+        pipeline.readFrom(OpenSkyStateVectors.getDataSource(url, pollingInterval))
                 .withIngestionTimestamps()
                 .groupingKey(message -> message.getIcao24().trim())
                 .window(WindowDefinition.session(TimeUnit.MINUTES.toMillis(5)))
@@ -85,7 +85,7 @@ public class OpenSkyStatesPipeline {
 
                     return new FlightResult(locationId, startStateVector, endStateVector);
                 })
-                .mapUsingIMap("all-flights", FlightResult::getIcao24, (FlightResult flightResult, FlightsWithingTimeRange flightsWithingTimeRange) -> {
+                .mapUsingIMap("all-flights", FlightResult::getIcao24, (FlightResult flightResult, FlightData flightsWithingTimeRange) -> {
                     if (flightsWithingTimeRange == null) {
                         return flightResult;
                     }

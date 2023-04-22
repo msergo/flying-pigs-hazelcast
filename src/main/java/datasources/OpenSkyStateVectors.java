@@ -7,13 +7,16 @@ import com.hazelcast.jet.pipeline.StreamSource;
 import com.hazelcast.logging.ILogger;
 import models.OpenSkyStates;
 import models.StateVector;
-import okhttp3.*;
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class OpenSkyDataSource {
+public class OpenSkyStateVectors {
     private final URL url;
     private final long pollIntervalMillis;
 
@@ -23,7 +26,7 @@ public class OpenSkyDataSource {
 
     private OkHttpClient client;
 
-    private OpenSkyDataSource(ILogger logger, String url, long pollIntervalMillis) {
+    private OpenSkyStateVectors(ILogger logger, String url, long pollIntervalMillis) {
         this.logger = logger;
         try {
             this.url = new URL(url);
@@ -75,9 +78,9 @@ public class OpenSkyDataSource {
     }
 
     public static StreamSource<StateVector> getDataSource(String url, long pollIntervalMillis) {
-        return SourceBuilder.timestampedStream("OpenSky Data Source",
-                        ctx -> new OpenSkyDataSource(ctx.logger(), url, pollIntervalMillis))
-                .fillBufferFn(OpenSkyDataSource::fillBuffer)
+        return SourceBuilder.timestampedStream("OpenSky StateVectors Source",
+                        ctx -> new OpenSkyStateVectors(ctx.logger(), url, pollIntervalMillis))
+                .fillBufferFn(OpenSkyStateVectors::fillBuffer)
                 .build();
     }
 }
