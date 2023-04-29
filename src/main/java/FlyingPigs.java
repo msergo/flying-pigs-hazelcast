@@ -5,15 +5,21 @@ import com.hazelcast.jet.JetInstance;
 import com.hazelcast.jet.config.JobConfig;
 import com.hazelcast.jet.config.ProcessingGuarantee;
 import com.hazelcast.jet.pipeline.Pipeline;
+import com.hazelcast.jet.pipeline.Sink;
+import com.hazelcast.jet.pipeline.StreamSource;
+import datasources.OpenSkyDataSource;
+import models.FlightResult;
 import models.Location;
 import models.LocationData;
-import pipelines.OpenSkyStatesPipeline;
+import models.OpenSkyStates;
+import pipelines.OpenSkyPipeline;
+import sinks.HttpSink;
 
 import java.util.List;
 
 public class FlyingPigs {
     public static void main(String[] args) throws Exception {
-        // Get environment variables now because job will run in a cluster
+        // Get environment variables here now because job will run in a cluster
         String apiHost = System.getenv("API_URL");
         String locationsUrl = apiHost + "/locations";
         String userEmail = System.getenv("USER_EMAIL");
@@ -25,7 +31,6 @@ public class FlyingPigs {
 
         ObjectMapper objectMapper = new ObjectMapper();
         LocationData locationData = objectMapper.readValue(response, LocationData.class);
-
         List<Location> locations = locationData.getData();
 
         JetInstance jet = Jet.bootstrappedInstance();
@@ -34,8 +39,11 @@ public class FlyingPigs {
             JobConfig jobConfig = new JobConfig().setName(location.getName());
             jobConfig.setSnapshotIntervalMillis(60000);
             jobConfig.setProcessingGuarantee(ProcessingGuarantee.AT_LEAST_ONCE);
-            OpenSkyStatesPipeline flightStats = new OpenSkyStatesPipeline(location);
-            Pipeline pipeline = flightStats.createPipeline(location.getId(), apiHost, userEmail, userPassword);
+
+            Sink<FlightResult> httpSink = HttpSink.getSink(apiHost, userEmail, userPassword);
+            StreamSource<OpenSkyStates> source = OpenSkyDataSource.getDataSource(location.getPollingInterval());
+
+            Pipeline pipeline = OpenSkyPipeline.createPipeline(location, source, httpSink);
 
             try {
                 jet.getJob(location.getName()).cancel();

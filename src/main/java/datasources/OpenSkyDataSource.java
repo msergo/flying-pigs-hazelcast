@@ -6,8 +6,10 @@ import com.hazelcast.jet.pipeline.SourceBuilder;
 import com.hazelcast.jet.pipeline.StreamSource;
 import com.hazelcast.logging.ILogger;
 import models.OpenSkyStates;
-import models.StateVector;
-import okhttp3.*;
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -35,8 +37,7 @@ public class OpenSkyDataSource {
         this.client = new OkHttpClient();
     }
 
-
-    private void fillBuffer(SourceBuilder.TimestampedSourceBuffer<StateVector> buffer) throws IOException {
+    private void fillBuffer(SourceBuilder.TimestampedSourceBuffer<OpenSkyStates> buffer) throws IOException {
         long now = System.currentTimeMillis();
         if (now < (lastPoll + pollIntervalMillis)) {
             return;
@@ -44,7 +45,7 @@ public class OpenSkyDataSource {
         lastPoll = now;
 
         OpenSkyStates openSkyStates = pollForOpenSkyStates();
-        openSkyStates.getStates().stream().forEach(buffer::add);
+        buffer.add(openSkyStates);
 
         logger.info("Polled " + openSkyStates.getStates().size() + " positions.");
     }
@@ -74,9 +75,9 @@ public class OpenSkyDataSource {
         }
     }
 
-    public static StreamSource<StateVector> getDataSource(String url, long pollIntervalMillis) {
+    public static StreamSource<OpenSkyStates> getDataSource(long pollIntervalMillis) {
         return SourceBuilder.timestampedStream("OpenSky Data Source",
-                        ctx -> new OpenSkyDataSource(ctx.logger(), url, pollIntervalMillis))
+                        ctx -> new OpenSkyDataSource(ctx.logger(), "https://opensky-network.org/api/states/all", pollIntervalMillis))
                 .fillBufferFn(OpenSkyDataSource::fillBuffer)
                 .build();
     }
