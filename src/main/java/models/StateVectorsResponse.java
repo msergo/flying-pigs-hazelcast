@@ -10,8 +10,8 @@ import java.util.Collections;
  *
  * @author Markus Fuchs, fuchs@opensky-network.org
  */
-@JsonDeserialize(using = OpenSkyStatesDeserializer.class)
-public class OpenSkyStates {
+@JsonDeserialize(using = StateVectorResponseDeserializer.class)
+public class StateVectorsResponse {
     private int time;
     private Collection<StateVector> flightStates;
 

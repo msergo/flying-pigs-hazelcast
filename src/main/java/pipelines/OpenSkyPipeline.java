@@ -1,17 +1,18 @@
 package pipelines;
 
 import com.hazelcast.function.ComparatorEx;
-import com.hazelcast.jet.Traversers;
 import com.hazelcast.jet.aggregate.AggregateOperations;
 import com.hazelcast.jet.datamodel.KeyedWindowResult;
 import com.hazelcast.jet.pipeline.*;
-import models.*;
+import models.FlightResult;
+import models.Location;
+import models.StateVector;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class OpenSkyPipeline {
-    public static Pipeline createPipeline(Location location, StreamSource<OpenSkyStates> source, Sink<FlightResult> sink) {
+    public static Pipeline createPipeline(Location location, StreamSource<StateVector> source, Sink<FlightResult> sink) {
         Pipeline pipeline = Pipeline.create();
 
         String locationId = location.getId();
@@ -26,7 +27,6 @@ public class OpenSkyPipeline {
 
         pipeline.readFrom(source)
                 .withIngestionTimestamps()
-                .flatMap((OpenSkyStates openSkyStates) -> Traversers.traverseStream(openSkyStates.getStates().stream()))
                 .filter((StateVector stateVector) -> {
                     try {
                         double longitude = stateVector.getLongitude();
@@ -42,7 +42,7 @@ public class OpenSkyPipeline {
                         return false;
                     }
                 })
-                .groupingKey((message) -> message.getIcao24().trim())
+                .groupingKey((StateVector stateVector) -> stateVector.getIcao24().trim())
                 .window(WindowDefinition.session(TimeUnit.MINUTES.toMillis(5)))
                 .aggregate(AggregateOperations.toList())
                 .filter((KeyedWindowResult<String, List<StateVector>> list) -> {
@@ -60,16 +60,6 @@ public class OpenSkyPipeline {
                     StateVector endStateVector = list.result().stream().max(comparator).get();
 
                     return new FlightResult(locationId, startStateVector, endStateVector);
-                })
-                .mapUsingIMap("all-flights", FlightResult::getIcao24, (FlightResult flightResult, FlightsWithingTimeRange flightsWithingTimeRange) -> {
-                    if (flightsWithingTimeRange == null) {
-                        return flightResult;
-                    }
-
-                    flightResult.setEstArrivalAirport(flightsWithingTimeRange.getEstArrivalAirport());
-                    flightResult.setEstDepartureAirport(flightsWithingTimeRange.getEstDepartureAirport());
-
-                    return flightResult;
                 })
                 .writeTo(sink);
 

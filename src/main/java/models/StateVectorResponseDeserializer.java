@@ -18,9 +18,9 @@ import java.util.Collection;
  *
  * @author Markus Fuchs, fuchs@opensky-network.org
  */
-public class OpenSkyStatesDeserializer extends StdDeserializer<OpenSkyStates> {
-    public OpenSkyStatesDeserializer() {
-        super(OpenSkyStates.class);
+public class StateVectorResponseDeserializer extends StdDeserializer<StateVectorsResponse> {
+    public StateVectorResponseDeserializer() {
+        super(StateVectorsResponse.class);
     }
 
     private Collection<StateVector> deserializeStates(JsonParser jp) throws IOException {
@@ -85,12 +85,12 @@ public class OpenSkyStatesDeserializer extends StdDeserializer<OpenSkyStates> {
     }
 
     @Override
-    public OpenSkyStates deserialize(JsonParser jp, DeserializationContext dc) throws IOException {
+    public StateVectorsResponse deserialize(JsonParser jp, DeserializationContext dc) throws IOException {
         if (jp.getCurrentToken() != null && jp.getCurrentToken() != JsonToken.START_OBJECT) {
-            throw dc.mappingException(OpenSkyStates.class);
+            throw dc.mappingException(StateVectorsResponse.class);
         }
         try {
-            OpenSkyStates res = new OpenSkyStates();
+            StateVectorsResponse res = new StateVectorsResponse();
             for (jp.nextToken(); jp.getCurrentToken() != null && jp.getCurrentToken() != JsonToken.END_OBJECT; jp.nextToken()) {
                 if (jp.getCurrentToken() == JsonToken.FIELD_NAME) {
                     if ("time".equalsIgnoreCase(jp.getCurrentName())) {
@@ -107,7 +107,7 @@ public class OpenSkyStatesDeserializer extends StdDeserializer<OpenSkyStates> {
             }
             return res;
         } catch (JsonParseException jpe) {
-            throw dc.mappingException(OpenSkyStates.class);
+            throw dc.mappingException(StateVectorsResponse.class);
         }
     }
 }

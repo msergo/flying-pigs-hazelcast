@@ -7,11 +7,11 @@ import com.hazelcast.jet.config.ProcessingGuarantee;
 import com.hazelcast.jet.pipeline.Pipeline;
 import com.hazelcast.jet.pipeline.Sink;
 import com.hazelcast.jet.pipeline.StreamSource;
-import datasources.OpenSkyDataSource;
+import datasources.RabbitMQDataSource;
 import models.FlightResult;
 import models.Location;
 import models.LocationData;
-import models.OpenSkyStates;
+import models.StateVector;
 import pipelines.OpenSkyPipeline;
 import sinks.HttpSink;
 
@@ -41,7 +41,7 @@ public class FlyingPigs {
             jobConfig.setProcessingGuarantee(ProcessingGuarantee.AT_LEAST_ONCE);
 
             Sink<FlightResult> httpSink = HttpSink.getSink(apiHost, userEmail, userPassword);
-            StreamSource<OpenSkyStates> source = OpenSkyDataSource.getDataSource(location.getPollingInterval());
+            StreamSource<StateVector> source = RabbitMQDataSource.getDataSource();
 
             Pipeline pipeline = OpenSkyPipeline.createPipeline(location, source, httpSink);
 
