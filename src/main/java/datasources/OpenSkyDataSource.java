@@ -5,7 +5,8 @@ import com.hazelcast.internal.util.ExceptionUtil;
 import com.hazelcast.jet.pipeline.SourceBuilder;
 import com.hazelcast.jet.pipeline.StreamSource;
 import com.hazelcast.logging.ILogger;
-import models.OpenSkyStates;
+import models.StateVector;
+import models.StateVectorsResponse;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -37,20 +38,20 @@ public class OpenSkyDataSource {
         this.client = new OkHttpClient();
     }
 
-    private void fillBuffer(SourceBuilder.TimestampedSourceBuffer<OpenSkyStates> buffer) throws IOException {
+    private void fillBuffer(SourceBuilder.TimestampedSourceBuffer<StateVector> buffer) throws IOException {
         long now = System.currentTimeMillis();
         if (now < (lastPoll + pollIntervalMillis)) {
             return;
         }
         lastPoll = now;
 
-        OpenSkyStates openSkyStates = pollForOpenSkyStates();
-        buffer.add(openSkyStates);
+        StateVectorsResponse stateVectorsResponse = pollForOpenSkyStates();
+        stateVectorsResponse.getStates().stream().forEach(buffer::add);
 
-        logger.info("Polled " + openSkyStates.getStates().size() + " positions.");
+        logger.info("Polled " + stateVectorsResponse.getStates().size() + " positions.");
     }
 
-    private OpenSkyStates pollForOpenSkyStates() throws IOException {
+    private StateVectorsResponse pollForOpenSkyStates() throws IOException {
         try {
             Request request = new Request.Builder()
                     .url(url)
@@ -64,18 +65,18 @@ public class OpenSkyDataSource {
 
             if (responseCode != 200) {
                 logger.info("API returned error: " + response.code() + " " + response);
-                return new OpenSkyStates();
+                return new StateVectorsResponse();
             }
 
             ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(responseBody, OpenSkyStates.class);
+            return objectMapper.readValue(responseBody, StateVectorsResponse.class);
         } catch (IOException e) {
             logger.info("Error while polling OpenSky API: " + e.getMessage());
-            return new OpenSkyStates();
+            return new StateVectorsResponse();
         }
     }
 
-    public static StreamSource<OpenSkyStates> getDataSource(long pollIntervalMillis) {
+    public static StreamSource<StateVector> getDataSource(long pollIntervalMillis) {
         return SourceBuilder.timestampedStream("OpenSky Data Source",
                         ctx -> new OpenSkyDataSource(ctx.logger(), "https://opensky-network.org/api/states/all", pollIntervalMillis))
                 .fillBufferFn(OpenSkyDataSource::fillBuffer)

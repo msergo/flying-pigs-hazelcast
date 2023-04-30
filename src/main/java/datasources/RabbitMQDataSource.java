@@ -5,12 +5,13 @@ import com.hazelcast.jet.pipeline.SourceBuilder;
 import com.hazelcast.jet.pipeline.StreamSource;
 import com.rabbitmq.jms.admin.RMQConnectionFactory;
 import com.rabbitmq.jms.admin.RMQDestination;
-import models.OpenSkyStates;
+import models.StateVector;
+import models.StateVectorsResponse;
 
 import javax.jms.*;
 
 public class RabbitMQDataSource {
-    public static StreamSource<OpenSkyStates> getDataSource() {
+    public static StreamSource<StateVector> getDataSource() {
         return SourceBuilder.timestampedStream("rabbit-source", context -> {
                     RMQConnectionFactory rmqConnectionFactory = new RMQConnectionFactory();
                     rmqConnectionFactory.setHost("0.0.0.0");
@@ -32,7 +33,7 @@ public class RabbitMQDataSource {
                     MessageConsumer consumer = session.createConsumer(jmsDestination);
                     return consumer;
                 })
-                .fillBufferFn((MessageConsumer consumer, SourceBuilder.TimestampedSourceBuffer<OpenSkyStates> buffer) -> {
+                .fillBufferFn((MessageConsumer consumer, SourceBuilder.TimestampedSourceBuffer<StateVector> buffer) -> {
                     try {
                         Message message = consumer.receive();
                         BytesMessage bytesMessage = (BytesMessage) message;
@@ -41,8 +42,9 @@ public class RabbitMQDataSource {
                         bytesMessage.readBytes(byteData);
                         bytesMessage.reset();
                         ObjectMapper mapper = new ObjectMapper();
-                        OpenSkyStates openSkyStates = mapper.readValue(byteData, OpenSkyStates.class);
-                        buffer.add(openSkyStates);
+                        StateVectorsResponse stateVectorsResponse = mapper.readValue(byteData, StateVectorsResponse.class);
+                        // Add all the state vectors to the buffer
+                        stateVectorsResponse.getStates().forEach(buffer::add);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
