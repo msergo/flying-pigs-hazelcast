@@ -12,6 +12,8 @@ spec:
         - name: flying-pigs-hazelcast-job
           image: harbor.codemowers.eu/msergo/flying-pigs-hazelcast:master
           env:
+            - name: ENVIRONMENT
+              value: "prod"
             - name: USER_EMAIL
               valueFrom:
                 secretKeyRef:
@@ -27,12 +29,27 @@ spec:
                 secretKeyRef:
                   name: flying-pigs-hazelcast-secrets
                   key: API_URL
+            - name: RABBITMQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: flying-pigs-hazelcast-secrets
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef:
+                  name: flying-pigs-hazelcast-secrets
+                  key: RABBITMQ_USER
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: flying-pigs-hazelcast-secrets
+                  key: RABBITMQ_PASSWORD
 
           command:
             [
-              "sh",
-              "-c",
-              "jet -t hazelcast-jet-service submit /jobs/flying-pigs-hazelcast-1.0-SNAPSHOT-jar-with-dependencies.jar",
+                "sh",
+                "-c",
+                "jet -t hazelcast-jet-service submit /jobs/job.jar",
             ]
       restartPolicy: Never
   backoffLimit: 3

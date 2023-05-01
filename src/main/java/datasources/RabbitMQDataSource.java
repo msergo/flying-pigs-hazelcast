@@ -5,27 +5,34 @@ import com.hazelcast.jet.pipeline.SourceBuilder;
 import com.hazelcast.jet.pipeline.StreamSource;
 import com.rabbitmq.jms.admin.RMQConnectionFactory;
 import com.rabbitmq.jms.admin.RMQDestination;
+import com.typesafe.config.Config;
+import config.ConfigManager;
+import models.Location;
 import models.StateVector;
 import models.StateVectorsResponse;
 
 import javax.jms.*;
 
 public class RabbitMQDataSource {
-    public static StreamSource<StateVector> getDataSource() {
+    public static StreamSource<StateVector> getDataSource(Location location) {
+        Config config = ConfigManager.getConfig();
+        String destinationQueueName = location.getName().toLowerCase() + "-queue";
+
         return SourceBuilder.timestampedStream("rabbit-source", context -> {
                     RMQConnectionFactory rmqConnectionFactory = new RMQConnectionFactory();
-                    rmqConnectionFactory.setHost("0.0.0.0");
-                    rmqConnectionFactory.setPort(5672);
-                    rmqConnectionFactory.setUsername("user");
-                    rmqConnectionFactory.setPassword("bitnami");
+                    rmqConnectionFactory.setHost(config.getString("rabbitmq.host"));
+                    rmqConnectionFactory.setPort(config.getInt("rabbitmq.port"));
+                    rmqConnectionFactory.setUsername(config.getString("rabbitmq.user"));
+                    rmqConnectionFactory.setPassword(config.getString("rabbitmq.password"));
+
                     Connection connection = rmqConnectionFactory.createTopicConnection();
                     connection.start();
 
                     Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
                     Topic topic = session.createTopic("#");
-                    session.createDurableSubscriber(topic, "estonia-queue");
+                    session.createDurableSubscriber(topic, destinationQueueName);
 
-                    RMQDestination jmsDestination = new RMQDestination("estonia-queue", true, false);
+                    RMQDestination jmsDestination = new RMQDestination(destinationQueueName, true, false);
                     jmsDestination.setDestinationName("#"); // routing key
                     jmsDestination.setAmqp(true);
                     jmsDestination.setAmqpExchangeName("flying-pigs-exchange");
@@ -49,6 +56,7 @@ public class RabbitMQDataSource {
                         e.printStackTrace();
                     }
                 })
+                .destroyFn(MessageConsumer::close)
                 .build();
     }
 }

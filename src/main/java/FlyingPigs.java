@@ -7,7 +7,9 @@ import com.hazelcast.jet.config.ProcessingGuarantee;
 import com.hazelcast.jet.pipeline.Pipeline;
 import com.hazelcast.jet.pipeline.Sink;
 import com.hazelcast.jet.pipeline.StreamSource;
-import datasources.OpenSkyDataSource;
+import com.typesafe.config.Config;
+import config.ConfigManager;
+import datasources.RabbitMQDataSource;
 import models.FlightResult;
 import models.Location;
 import models.LocationData;
@@ -20,14 +22,17 @@ import java.util.List;
 public class FlyingPigs {
     public static void main(String[] args) throws Exception {
         // Get environment variables here now because job will run in a cluster
-        String apiHost = System.getenv("API_URL");
-        String locationsUrl = apiHost + "/locations";
-        String userEmail = System.getenv("USER_EMAIL");
-        String userPassword = System.getenv("USER_PASSWORD");
+        Config config = ConfigManager.getConfig();
+        System.out.println("Using host from config: " + config.getString("api.host"));
+
+        String apiHost = config.getString("api.host");
+        String locationsUri = apiHost + config.getString("api.locationsUri");
+        String userEmail = config.getString("api.userEmail");
+        String userPassword = config.getString("api.userPassword");
 
         FlyingPigsApiClient flyingPigsApiClient = new FlyingPigsApiClient(apiHost, userEmail, userPassword);
 
-        String response = flyingPigsApiClient.get(locationsUrl);
+        String response = flyingPigsApiClient.get(locationsUri);
 
         ObjectMapper objectMapper = new ObjectMapper();
         LocationData locationData = objectMapper.readValue(response, LocationData.class);
@@ -41,7 +46,7 @@ public class FlyingPigs {
             jobConfig.setProcessingGuarantee(ProcessingGuarantee.AT_LEAST_ONCE);
 
             Sink<FlightResult> httpSink = HttpSink.getSink(apiHost, userEmail, userPassword);
-            StreamSource<StateVector> source = OpenSkyDataSource.getDataSource(location.getPollingInterval());
+            StreamSource<StateVector> source = RabbitMQDataSource.getDataSource(location);
 
             Pipeline pipeline = OpenSkyPipeline.createPipeline(location, source, httpSink);
 
