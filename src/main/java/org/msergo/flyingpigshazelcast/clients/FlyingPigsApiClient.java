@@ -1,10 +1,10 @@
-package clients;
+package org.msergo.flyingpigshazelcast.clients;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
-import models.FlyingPigsApiAuthRequest;
-import models.FlyingPigsApiAuthResult;
+import org.msergo.flyingpigshazelcast.models.FlyingPigsApiAuthRequest;
+import org.msergo.flyingpigshazelcast.models.FlyingPigsApiAuthResult;
 import okhttp3.*;
 
 import java.io.IOException;

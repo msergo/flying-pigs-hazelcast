@@ -24,7 +24,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>FlyingPigs</mainClass>
+                            <mainClass>org.msergo.flyingpigshazelcast.FlyingPigs</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

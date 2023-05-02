@@ -10,7 +10,7 @@ spec:
         - name: regcred
       containers:
         - name: flying-pigs-hazelcast-job
-          image: harbor.codemowers.eu/msergo/flying-pigs-hazelcast@sha256:e76b7515e26a5b3f97fd4c513b36f3997ae22d1c55014309c6f0f4a20bded39e
+          image: harbor.codemowers.eu/msergo/flying-pigs-hazelcast:master
           env:
             - name: ENVIRONMENT
               value: "prod"
