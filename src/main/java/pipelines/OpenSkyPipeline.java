@@ -9,7 +9,6 @@ import models.Location;
 import models.StateVector;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class OpenSkyPipeline {
     public static Pipeline createPipeline(Location location, StreamSource<StateVector> source, Sink<FlightResult> sink) {
@@ -20,6 +19,8 @@ public class OpenSkyPipeline {
         double loMax = location.getLoMax();
         double laMin = location.getLaMin();
         double laMax = location.getLaMax();
+        // Time to consider a flight as disappeared/finished
+        long timeWindowInterval = 3 * location.getPollingInterval();
 
         if (sink == null) {
             sink = Sinks.logger();
@@ -43,7 +44,7 @@ public class OpenSkyPipeline {
                     }
                 })
                 .groupingKey((StateVector stateVector) -> stateVector.getIcao24().trim())
-                .window(WindowDefinition.session(TimeUnit.MINUTES.toMillis(5)))
+                .window(WindowDefinition.session(timeWindowInterval))
                 .aggregate(AggregateOperations.toList())
                 .filter((KeyedWindowResult<String, List<StateVector>> list) -> {
                     if (list.result().size() < 2) {
