@@ -1,12 +1,12 @@
-package pipelines;
+package org.msergo.flyingpigshazelcast.pipelines;
 
 import com.hazelcast.function.ComparatorEx;
 import com.hazelcast.jet.aggregate.AggregateOperations;
 import com.hazelcast.jet.datamodel.KeyedWindowResult;
 import com.hazelcast.jet.pipeline.*;
-import models.FlightResult;
-import models.Location;
-import models.StateVector;
+import org.msergo.flyingpigshazelcast.models.StateVector;
+import org.msergo.flyingpigshazelcast.models.FlightResult;
+import org.msergo.flyingpigshazelcast.models.Location;
 
 import java.util.List;
 

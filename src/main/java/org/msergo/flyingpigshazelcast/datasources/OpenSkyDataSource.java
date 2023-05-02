@@ -1,12 +1,12 @@
-package datasources;
+package org.msergo.flyingpigshazelcast.datasources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hazelcast.internal.util.ExceptionUtil;
 import com.hazelcast.jet.pipeline.SourceBuilder;
 import com.hazelcast.jet.pipeline.StreamSource;
 import com.hazelcast.logging.ILogger;
-import models.StateVector;
-import models.StateVectorsResponse;
+import org.msergo.flyingpigshazelcast.models.StateVector;
+import org.msergo.flyingpigshazelcast.models.StateVectorsResponse;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

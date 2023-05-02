@@ -1,17 +1,19 @@
+package org.msergo.flyingpigshazelcast;
+
 import com.hazelcast.jet.Jet;
 import com.hazelcast.jet.JetInstance;
 import com.hazelcast.jet.pipeline.Pipeline;
 import com.hazelcast.jet.pipeline.SourceBuilder;
 import com.hazelcast.jet.pipeline.StreamSource;
 import com.hazelcast.jet.pipeline.test.AssertionCompletedException;
-import models.FlightResult;
-import models.Location;
-import models.StateVector;
+import org.msergo.flyingpigshazelcast.models.FlightResult;
+import org.msergo.flyingpigshazelcast.models.Location;
+import org.msergo.flyingpigshazelcast.models.StateVector;
 import okhttp3.OkHttpClient;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import pipelines.OpenSkyPipeline;
+import org.msergo.flyingpigshazelcast.pipelines.OpenSkyPipeline;
 
 import java.util.ArrayList;
 import java.util.List;

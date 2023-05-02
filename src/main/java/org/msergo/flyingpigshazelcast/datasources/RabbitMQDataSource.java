@@ -1,4 +1,4 @@
-package datasources;
+package org.msergo.flyingpigshazelcast.datasources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hazelcast.jet.pipeline.SourceBuilder;
@@ -6,10 +6,10 @@ import com.hazelcast.jet.pipeline.StreamSource;
 import com.rabbitmq.jms.admin.RMQConnectionFactory;
 import com.rabbitmq.jms.admin.RMQDestination;
 import com.typesafe.config.Config;
-import config.ConfigManager;
-import models.Location;
-import models.StateVector;
-import models.StateVectorsResponse;
+import org.msergo.flyingpigshazelcast.models.Location;
+import org.msergo.flyingpigshazelcast.models.StateVector;
+import org.msergo.flyingpigshazelcast.config.ConfigManager;
+import org.msergo.flyingpigshazelcast.models.StateVectorsResponse;
 
 import javax.jms.*;
 

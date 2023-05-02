@@ -1,4 +1,4 @@
-package models;
+package org.msergo.flyingpigshazelcast.models;
 
 import java.io.Serializable;
 import java.util.HashSet;
