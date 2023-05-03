@@ -6,9 +6,9 @@ import com.hazelcast.jet.pipeline.StreamSource;
 import com.rabbitmq.jms.admin.RMQConnectionFactory;
 import com.rabbitmq.jms.admin.RMQDestination;
 import com.typesafe.config.Config;
+import org.msergo.flyingpigshazelcast.config.ConfigManager;
 import org.msergo.flyingpigshazelcast.models.Location;
 import org.msergo.flyingpigshazelcast.models.StateVector;
-import org.msergo.flyingpigshazelcast.config.ConfigManager;
 import org.msergo.flyingpigshazelcast.models.StateVectorsResponse;
 
 import javax.jms.*;
@@ -29,16 +29,14 @@ public class RabbitMQDataSource {
                     connection.start();
 
                     Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-                    Topic topic = session.createTopic("#");
+                    Topic topic = session.createTopic("opensky.#");
+
                     session.createDurableSubscriber(topic, destinationQueueName);
 
                     RMQDestination jmsDestination = new RMQDestination(destinationQueueName, true, false);
-                    jmsDestination.setDestinationName("#"); // routing key
                     jmsDestination.setAmqp(true);
-                    jmsDestination.setAmqpExchangeName("flying-pigs-exchange");
 
-                    MessageConsumer consumer = session.createConsumer(jmsDestination);
-                    return consumer;
+                    return session.createConsumer(jmsDestination);
                 })
                 .fillBufferFn((MessageConsumer consumer, SourceBuilder.TimestampedSourceBuffer<StateVector> buffer) -> {
                     try {
