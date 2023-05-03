@@ -52,7 +52,7 @@ public class FlyingPigs {
             Pipeline pipeline = OpenSkyPipeline.createPipeline(location, source, httpSink);
 
             try {
-                jet.getJob(location.getName()).cancel();
+                jet.getJob(location.getName()).cancelAndExportSnapshot(location.getName() + ".snapshot");
             } finally {
                 jet.newJob(pipeline, jobConfig);
             }
