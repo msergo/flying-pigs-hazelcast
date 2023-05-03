@@ -20,6 +20,7 @@ import org.msergo.flyingpigshazelcast.pipelines.OpenSkyPipeline;
 import org.msergo.flyingpigshazelcast.sinks.HttpSink;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class FlyingPigs {
     public static void main(String[] args) throws Exception {
@@ -43,7 +44,7 @@ public class FlyingPigs {
 
         locations.stream().forEach(location -> {
             JobConfig jobConfig = new JobConfig().setName(location.getName());
-            jobConfig.setSnapshotIntervalMillis(60000);
+            jobConfig.setSnapshotIntervalMillis(TimeUnit.MINUTES.toMillis(10));
             jobConfig.setProcessingGuarantee(ProcessingGuarantee.AT_LEAST_ONCE);
 
             Sink<FlightResult> httpSink = HttpSink.getSink(apiHost, userEmail, userPassword);
