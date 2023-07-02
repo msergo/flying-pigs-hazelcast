@@ -10,7 +10,7 @@ spec:
         - name: regcred
       containers:
         - name: flying-pigs-hazelcast-job
-          image: harbor.codemowers.eu/msergo/flying-pigs-hazelcast
+          image: harbor.codemowers.eu/msergo/flying-pigs-hazelcast:master
           env:
             - name: ENVIRONMENT
               value: "prod"
@@ -46,11 +46,7 @@ spec:
                   key: RABBITMQ_PASSWORD
 
           command:
-            [
-                "sh",
-                "-c",
-                "jet -t hazelcast-jet-service submit /jobs/job.jar",
-            ]
+            ["sh", "-c", "jet -t hazelcast-jet-service submit /jobs/job.jar"]
       restartPolicy: Never
   backoffLimit: 3
   activeDeadlineSeconds: 100

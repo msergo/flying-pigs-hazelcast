@@ -9,6 +9,11 @@ import org.msergo.flyingpigshazelcast.models.FlightResult;
 import org.msergo.flyingpigshazelcast.models.Location;
 
 import java.util.List;
+/**
+ * The OpenSkyPipeline class is responsible for creating a Jet pipeline for a given location.
+ * It ignores flights that are on the ground only (airport transport) and which have started on the ground or have landed.
+ * Only flights that have passed through the given location are considered.
+ */
 
 public class OpenSkyPipeline {
     public static Pipeline createPipeline(Location location, StreamSource<StateVector> source, Sink<FlightResult> sink) {
@@ -50,10 +55,12 @@ public class OpenSkyPipeline {
                     if (list.result().size() < 2) {
                         return false;
                     }
-                    // Filter out flights that were on the ground only
+                    // Filter out flights that were on the ground only or which have started on the ground
                     boolean allIsOnGround = list.result().stream().allMatch(StateVector::isOnGround);
+                    boolean hasStartedOnGround = list.result().get(0).isOnGround();
+                    boolean hasFinishedOnGround = list.result().get(list.result().size() - 1).isOnGround();
 
-                    return !allIsOnGround;
+                    return !allIsOnGround && !hasStartedOnGround && !hasFinishedOnGround;
                 })
                 .map((KeyedWindowResult<String, List<StateVector>> list) -> {
                     ComparatorEx<StateVector> comparator = ComparatorEx.comparing(StateVector::getLastContact);
